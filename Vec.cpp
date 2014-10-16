@@ -6,6 +6,9 @@
 #include <algorithm> //std::min
 #include "ContainerLengths.cpp"
 
+template<typename Elem, std::size_t DIM>
+class SubDimensionalArray;
+
 /* Classe abstraite représentant un conteneur d'élements et ayant plusieurs dimensions */
 template<std::size_t DIM> 
 class DimensionalContainer{
@@ -92,9 +95,6 @@ template<typename Elem, std::size_t DIM>
 class MultiDimensionalArray: public DimensionalContainer<DIM> {
 	Elem* _val;
 
-	template<std::size_t SUBDIM, bool DUMMY>
-	class SubDimensionalArray;
-	
 protected:
 	void copyAt(Elem* pelem, std::size_t elemSize){
 		for(std::size_t i=0;i<std::min(elemSize,this->getSize());++i) pelem[i] = _val[i];
@@ -120,13 +120,13 @@ public:
 		MultiDimensionalArray<Elem, DIM>(lengths){
 			for(std::size_t i=0;i<this->getSize();++i) _val[i] = elem;
 	}
-	SubDimensionalArray<DIM-1, true> operator[](std::ptrdiff_t i){
+	SubDimensionalArray<Elem, DIM-1> operator[](std::ptrdiff_t i){
 		if(std::size_t(i)>=this->getLength()) throw std::out_of_range("Index for dimension out of range");
-		return SubDimensionalArray<DIM-1, true>(this->getDimensionLengths(DIM-1), _val+i*this->getSize(DIM-1));
+		return SubDimensionalArray<Elem, DIM-1>(this->getDimensionLengths(DIM-1), _val+i*this->getSize(DIM-1));
 	}
-	SubDimensionalArray<DIM-1, true> operator[](std::ptrdiff_t i) const{
+	SubDimensionalArray<Elem, DIM-1> operator[](std::ptrdiff_t i) const{
 		if(std::size_t(i)>=this->getLength()) throw std::out_of_range("Index for dimension out of range");
-		return SubDimensionalArray<DIM-1, true>(this->getDimensionLengths(DIM-1), _val+i*this->getSize(DIM-1));
+		return SubDimensionalArray<Elem, DIM-1>(this->getDimensionLengths(DIM-1), _val+i*this->getSize(DIM-1));
 	}
 
 	const Elem& get(std::ptrdiff_t i) const {return *(_val+i); }
@@ -153,17 +153,16 @@ public:
 //------------------------------------------------------------
 
 template<typename Elem, std::size_t DIM>
-template<std::size_t SUBDIM, bool DUMMY>
-class MultiDimensionalArray<Elem, DIM>::SubDimensionalArray: public DimensionalContainer<SUBDIM>{
+class SubDimensionalArray: public DimensionalContainer<DIM>{
 	Elem* const _val;
 
 public:
 	SubDimensionalArray(const ContainerLengths& lengths, Elem* val): 
-		DimensionalContainer<SUBDIM>(lengths), _val(val) {}
-	SubDimensionalArray(const SubDimensionalArray<SUBDIM, DUMMY>& other) : 
-		DimensionalContainer<SUBDIM>(other), _val(other._val){}
+		DimensionalContainer<DIM>(lengths), _val(val) {}
+	SubDimensionalArray(const SubDimensionalArray<Elem, DIM>& other) : 
+		DimensionalContainer<DIM>(other), _val(other._val){}
 
-	SubDimensionalArray<SUBDIM, DUMMY>& operator=(const SubDimensionalArray<SUBDIM, DUMMY>& other){
+	SubDimensionalArray<Elem, DIM>& operator=(const SubDimensionalArray<Elem, DIM>& other){
 		if(this != &other){
 			if(this->hasSameLengths(other)){
 				for(std::size_t i=0;i<this->getSize();++i){
@@ -175,7 +174,7 @@ public:
 		}
 		return *this;
 	}
-	SubDimensionalArray<SUBDIM, DUMMY>& operator=(const MultiDimensionalArray<Elem, SUBDIM>& other){
+	SubDimensionalArray<Elem, DIM>& operator=(const MultiDimensionalArray<Elem, DIM>& other){
 		if(this->hasSameLengths(other)){
 			for(std::size_t i=0;i<this->getSize();++i){
 				_val[i] = other._val[i];
@@ -185,13 +184,13 @@ public:
 		throw std::logic_error("Cannot assign a MultiDimensionalArray to a subarray of different lengths");
 	}
 
-	SubDimensionalArray<SUBDIM-1, DUMMY> operator[](std::ptrdiff_t i){
+	SubDimensionalArray<Elem, DIM-1> operator[](std::ptrdiff_t i){
 		if(std::size_t(i)>=this->getLength()) throw std::out_of_range("Index for dimension out of range");
-		return SubDimensionalArray<SUBDIM-1, DUMMY>(this->getDimensionLengths(SUBDIM-1), _val+i*this->getSize(SUBDIM-1));
+		return SubDimensionalArray<Elem, DIM-1>(this->getDimensionLengths(DIM-1), _val+i*this->getSize(DIM-1));
 	}
-	SubDimensionalArray<SUBDIM-1, DUMMY> operator[](std::ptrdiff_t i) const{
+	SubDimensionalArray<Elem, DIM-1> operator[](std::ptrdiff_t i) const{
 		if(std::size_t(i)>=this->getLength()) throw std::out_of_range("Index for dimension out of range");
-		return SubDimensionalArray<SUBDIM-1, DUMMY>(this->getDimensionLengths(SUBDIM-1), _val+i*this->getSize(SUBDIM-1));
+		return SubDimensionalArray<Elem, DIM-1>(this->getDimensionLengths(DIM-1), _val+i*this->getSize(DIM-1));
 	}
 
 	virtual ~SubDimensionalArray(){}
@@ -199,18 +198,17 @@ public:
 
 //------------------------------------------------------------
 
-template<typename Elem, std::size_t DIM>
-template<bool DUMMY>
-class MultiDimensionalArray<Elem, DIM>::SubDimensionalArray<1, DUMMY>: public DimensionalContainer<1>{
+template<typename Elem>
+class SubDimensionalArray<Elem, 1>: public DimensionalContainer<1>{
 	Elem* const _val;
 
 public:
 	SubDimensionalArray(const ContainerLengths& length, Elem* val): 
 		DimensionalContainer<1>(length[0]), _val(val) {}
-	SubDimensionalArray(const SubDimensionalArray<1, DUMMY>& other):
+	SubDimensionalArray(const SubDimensionalArray<Elem, 1>& other):
 		DimensionalContainer<1>(other.getLength()), _val(other._val) {}
 
-	SubDimensionalArray<1, DUMMY>& operator=(const SubDimensionalArray<1, DUMMY>& other){
+	SubDimensionalArray<Elem, 1>& operator=(const SubDimensionalArray<Elem, 1>& other){
 		if(this != &other){
 			if(this->hasSameLength(other)){
 				for(std::size_t i=0;i<this->getSize();++i) _val[i] = other._val[i];
@@ -233,10 +231,8 @@ public:
 
 
 //------------------------------------------------------------
-
 template<typename Elem, std::size_t DIM>
-template<std::size_t SUBDIM, bool DUMMY>
-std::ostream& operator<< (std::ostream& out, const typename MultiDimensionalArray<Elem, DIM>::template SubDimensionalArray<SUBDIM, DUMMY>& d) {
+std::ostream& operator<< (std::ostream& out, const SubDimensionalArray<Elem, DIM>& d) {
 	out<<"[";
 	for(std::size_t i=0;i<d.getLength();++i){
   		out << d[i];
@@ -246,6 +242,7 @@ std::ostream& operator<< (std::ostream& out, const typename MultiDimensionalArra
   	out<<"]";
   	return out;
 }
+
 template<typename Elem, std::size_t DIM>
 std::ostream& operator<< (std::ostream& out, const MultiDimensionalArray<Elem, DIM>& d) {
 	out<<"[";
@@ -273,7 +270,7 @@ int main(){
 	try{
 		MultiDimensionalArray<int, 3> array({2,3,2});
 		std::cout<<array<<std::endl;
-		array.resize({1,10});
+		array.resize({1,10,2});
 		std::cout<<array<<std::endl;
 		
 	} catch(const std::exception& e){
