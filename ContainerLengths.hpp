@@ -1,3 +1,6 @@
+#ifndef CONTAINERLENGTHS_HPP
+#define CONTAINERLENGTHS_HPP
+
 #include <cstdlib>
 #include <exception>
 #include <stdexcept>
@@ -47,14 +50,16 @@ public:
  	/* Renvoie un sous-vecteur de longueurs correspondant à la dimension donnée */
  	ContainerLengths getLengths(std::size_t dim) const { return ContainerLengths(dim, _lengths+_dim-dim); }
 
- 	const std::size_t& operator[](std::size_t index) const{
-		if(index>_dim) throw std::out_of_range("Index out of range");
+ 	const std::size_t& operator[](std::ptrdiff_t index) const{
+		if(std::size_t(index)>_dim) throw std::out_of_range("Index out of range");
  		return _lengths[index];
 	}
-	std::size_t& operator[](std::size_t index){
-		if(index>_dim) throw std::out_of_range("Index out of range");
+	std::size_t& operator[](std::ptrdiff_t index){
+		if(std::size_t(index)>_dim) throw std::out_of_range("Index out of range");
  		return _lengths[index];
 	}
 
 	~ContainerLengths(){ delete[] _lengths; }
 };
+
+#endif
