@@ -9,30 +9,19 @@
 
 /* Classe représentant un tableau de dimension potentiellement infine */
 template<typename Elem, std::size_t DIM>
-class MultiDimensionalArray: public DimensionalContainer<DIM> {
+class MultiDimensionalArray{
 	Elem* _val;
-
-protected:
-	void copyAt(Elem* pelem, std::size_t elemSize){
-		for(std::size_t i=0;i<std::min(elemSize,this->getSize());++i) pelem[i] = _val[i];
-	}
-	void resize(const std::initializer_list<std::size_t>& lengthsList){
-		ContainerLengths newLengths(lengthsList);
-		if(newLengths.getDimension() != DIM) throw std::logic_error("Initializer_list must have n=dimension elements when resizing");
-		std::size_t newSize = this->computeSize(newLengths,DIM);
-		Elem* tmp = new Elem[newSize];
-		this->copyAt(tmp, newSize);
-		delete[] _val; _val = tmp;
-		this->setDimensionLengths(newLengths);
-	}
+	
 public:
 	MultiDimensionalArray(const ContainerLengths& lengths): 
 		DimensionalContainer<DIM>(lengths), _val(new Elem[this->getSize()]) {
+			if(this->getDimension()!=DIM) throw std::logic_error("Dimensions not matching");
 			for(std::size_t i=0;i<this->getSize();++i) _val[i] = Elem();
 		}
 
 	MultiDimensionalArray(const ContainerLengths& lengths, const Elem& elem) : 
-		MultiDimensionalArray<Elem, DIM>(lengths){
+		DimensionalContainer<DIM>(lengths), _val(new Elem[this->getSize()]) {
+			if(this->getDimension()!=DIM) throw std::logic_error("Dimensions not matching");
 			for(std::size_t i=0;i<this->getSize();++i) _val[i] = elem;
 	}
 	MultiDimensionalArray(const std::initializer_list<std::size_t>& lengthsList): 
@@ -49,8 +38,6 @@ public:
 		return SubDimensionalArray<Elem, DIM-1>(this->getDimensionLengths(DIM-1), _val+i*this->getSize(DIM-1));
 	}
 
-	const Elem& get(std::ptrdiff_t i) const {return *(_val+i); }
-
 	MultiDimensionalArray(const MultiDimensionalArray<Elem, DIM>&);
 	MultiDimensionalArray(MultiDimensionalArray<Elem,DIM>&&);
 	MultiDimensionalArray<Elem, DIM>& operator=(const MultiDimensionalArray<Elem, DIM>& other){
@@ -65,6 +52,17 @@ public:
 		}
 		return *this;
 	}
+	virtual void resize(const std::initializer_list<std::size_t>& lengthsList){
+		if(lengthsList.size()!=DIM) throw std::logic_error("Initializer list size not matching the array dimension")
+		ContainerLengths newLengths(lengthsList);
+		std::size_t newSize = this->computeSize(newLengths,DIM);
+		std::size_t oldSize = this->getSize();
+		Elem* tmp = new Elem[newSize];
+		//Init the new vector
+		for(std::size_t i=0;i<newSize;++i) (i<oldSize) ? tmp[i] = _val[i] : tmp[i] = Elem();
+		delete[] _val; _val = tmp;
+		this->setDimensionLengths(newLengths);
+	}
 
 	MultiDimensionalArray<Elem, DIM>& operator=(MultiDimensionalArray<Elem, DIM>&&);
 	virtual ~MultiDimensionalArray(){delete[] this->_val;}
@@ -77,8 +75,14 @@ class MultiDimensionalArray<Elem, 1>: public DimensionalContainer<1>{
 	Elem* _val;
 
 public:
-	MultiDimensionalArray(std::size_t length): 
-		DimensionalContainer<1>(length), _val(new Elem[this->getLength()]) {}
+	MultiDimensionalArray(std::size_t length = Constants::DEFAULT_DIM_LENGTH): 
+		DimensionalContainer<1>(length), _val(new Elem[this->getLength()]) {
+			for(std::size_t i=0;i<this->getLength();++i) _val[i] = Elem();
+		}
+	MultiDimensionalArray(std::size_t length, const Elem& elem): 
+		DimensionalContainer<1>(length), _val(new Elem[this->getLength()]) {
+			for(std::size_t i=0;i<this->getLength();++i) _val[i] = elem;
+		}
 	MultiDimensionalArray(const MultiDimensionalArray<Elem, 1>& other) : MultiDimensionalArray<Elem, 1>(other.getLength()){
 		for(std::size_t i=0;i<this->getLength();++i) _val[i] = other._val[i];
 	}
@@ -92,6 +96,29 @@ public:
 		return this->_val[i];
 	}
 	virtual ~MultiDimensionalArray(){delete[] this->_val;}
+
+	MultiDimensionalArray<Elem, 1>& operator=(const MultiDimensionalArray<Elem, 1>& other){
+		if(this!=&other){
+			if(this->hasSameLength(other)){
+				for(std::size_t i=0;i<this->getLength();++i) _val[i] = other._val[i];
+				return *this;
+			}
+			delete[] _val; _val = new Elem[other.getLength()];
+			this->setLength(other.getLength());
+			for(std::size_t i=0;i<this->getSize();++i) _val[i] = other._val[i];
+		}
+		return *this;
+	}
+
+	virtual void resize(std::size_t newLength){
+		std::size_t newSize = newLength;
+		std::size_t oldSize = this->getLength();
+		Elem* tmp = new Elem[newSize];
+		//Init the new vector
+		for(std::size_t i=0;i<newSize;++i) (i<oldSize) ? tmp[i] = _val[i] : tmp[i] = Elem();
+		delete[] _val; _val = tmp;
+		this->setLength(newLength);
+	}
 };
 
 #endif

@@ -12,7 +12,7 @@ class DimensionalContainer{
 
 protected:
 	/* Classe abstraite : constructeur en protected */
-	DimensionalContainer(const ContainerLengths& lengths = ContainerLengths(DIM)) : _lengths(lengths) {}
+	DimensionalContainer(const ContainerLengths<DIM>& lengths) : _lengths(lengths) {}
 
 	/* Modifie les longueurs des dimensions de la dimension donnée */
 	void setDimensionLengths(const ContainerLengths& lengths, std::size_t dim=DIM){
@@ -39,13 +39,13 @@ public:
 	/* Renvoie la longueur de la dimension donnée */
 	std::size_t getLength(std::size_t dim=DIM) const {		
 		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
-		return _lengths[DIM-dim]; 
+		return _lengths[dim]; 
 	}
 	/* Renvoie le nombre d'éléments compris dans la dimension donnée */
 	std::size_t getSize(std::size_t dim=DIM) const { 		
 		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
 		std::size_t size = 1; 
-		for(std::size_t i=DIM-dim;i<DIM;++i) size*=_lengths[ptrdiff_t(i)]; 
+		for(std::size_t dimI=1;dimI<=DIM;++dimI) size*=_lengths[dimI]; 
 		return size;
 	}
 	/* Renvoie vrai si, respectivement, les dimensions de l'objet donné 
@@ -71,7 +71,6 @@ private:
 
 protected:
 	DimensionalContainer(std::size_t length=Constants::DEFAULT_DIM_LENGTH) : _length(length){}
-	
 	void setLength(std::size_t length) { _length = length; }
 
 public:

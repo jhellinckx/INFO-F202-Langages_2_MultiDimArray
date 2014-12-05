@@ -12,7 +12,8 @@ class MultiDimensionalArray;
 template<typename Elem, std::size_t DIM>
 class SubDimensionalArray: public DimensionalContainer<DIM>{
 	Elem* const _val;
-
+	ContainerLengths& const _lengths;
+protected:
 	SubDimensionalArray(const ContainerLengths& lengths, Elem* val): 
 		DimensionalContainer<DIM>(lengths), _val(val) {}
 	SubDimensionalArray(const SubDimensionalArray<Elem, DIM>& other) : 

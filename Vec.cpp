@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <algorithm> //std::min
 #include "MultiDimensionalArray.hpp"
+#include "BoundedMultiDimensionalArray.hpp"
 
 template<typename Elem, std::size_t DIM>
 std::ostream& operator<< (std::ostream& out, const SubDimensionalArray<Elem, DIM>& d) {
@@ -45,9 +46,10 @@ std::ostream& operator<<(std::ostream& out, const ContainerLengths& c){
 
 int main(){
 	try{
-		MultiDimensionalArray<int, 1> array(10);
+		BoundedMultiDimensionalArray<int, 1> array({1,10},5,10);
 		std::cout<<array<<std::endl;
-		
+		array.resize(10);
+		std::cout<<array<<std::endl;
 	} catch(const std::exception& e){
 		std::cerr << std::endl << "\033[31m" << "*** " << e.what() << " ***" << "\033[0m" << std::endl<<std::endl;;
 		return 1;

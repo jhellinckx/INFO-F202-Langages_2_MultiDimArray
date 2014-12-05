@@ -1,6 +1,7 @@
 #ifndef CONTAINERLENGTHS_HPP
 #define CONTAINERLENGTHS_HPP
 
+#include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <stdexcept>
@@ -11,55 +12,65 @@ namespace Constants{
 }
 
 /* Classe responsable des longueurs d'un conteneur */
+template<std::size_t DIM>
 class ContainerLengths{
-	std::size_t _dim;
-	std::size_t* _lengths;
+	std::size_t _lengths[DIM];
 
 public:
-	ContainerLengths(const std::initializer_list<std::size_t>& lengths = {Constants::DEFAULT_DIM_LENGTH}) : _dim(lengths.size()), _lengths(new std::size_t[_dim]){
-		if(_dim<1) throw std::logic_error("Dimension cannot be lesser than 1");
-		std::initializer_list<std::size_t>::iterator it = lengths.begin();
-		std::size_t i = 0;
-		while(it!=lengths.end()){
-			_lengths[i]=(*it);
-			++it; ++i;
-		}
+	/* Reçoit en paramètre une liste d'initialisation contenant la longueur de chaque 
+	dimension (par ordre décroissant) et en fait une copie vers un vecteur */
+	ContainerLengths(const std::initializer_list<std::size_t>& lengths){
+		if(DIM!=lengths.size()) throw std::logic_error("List size not matching the container dimension");
+		std::size_t lengths[DIM]; std::size_t i=0;
+		/* On ordonne les longueurs par dimension croissante : 
+		_lengths[0] == longueur de la dimension 1 */
+		for(std::initializer_list<std::size_t>::iterator it = lengths.begin();it!=lengths.end();++it)
+			_lengths[DIM-i++-1] = *it;
 	}
-	ContainerLengths(std::size_t dimension, std::size_t* lengths) : _dim(dimension), _lengths(new std::size_t[dimension]){
-		if(dimension<1) throw std::logic_error("Dimension cannot be lesser than 1");
-		if(lengths==NULL){
-			for(std::size_t i=0;i<_dim;++i) _lengths[i]=Constants::DEFAULT_DIM_LENGTH;
-		}
-		else
-			for(std::size_t i=0;i<_dim;++i) _lengths[i]=lengths[i];
+	
+	ContainerLengths(std::size_t size, std::size_t lengths[]){
+		if(DIM!=size throw std::logic_error("Vector size not matching the container dimension");
+		for(std::size_t i=0;i<DIM;++i) _lengths[DIM-i-1]= lengths[i];
 	}
-	ContainerLengths(const ContainerLengths& other) : _dim(other._dim), _lengths(new std::size_t[other._dim]) {
-		for(std::size_t i=0;i<_dim;++i) _lengths[i]=other._lengths[i];
+
+	ContainerLengths(const ContainerLengths<DIM>& other) {
+		for(std::size_t i=0;i<DIM;++i) _lengths[i]=other._lengths[i];
 	}
 
 	ContainerLengths& operator=(const ContainerLengths& other){
 		if(this!=&other){
-			_dim = other._dim; 
-			delete[] _lengths; _lengths = new std::size_t[other._dim];
-			for(std::size_t i=0;i<_dim;++i) _lengths[i]=other._lengths[i];
+			for(std::size_t i=0;i<DIM;++i) _lengths[i]=other._lengths[i];
 		}
 		return *this;
 	}
  	
- 	std::size_t getDimension() const { return _dim; }
- 	/* Renvoie un sous-vecteur de longueurs correspondant à la dimension donnée */
- 	ContainerLengths getLengths(std::size_t dim) const { return ContainerLengths(dim, _lengths+_dim-dim); }
+ 	std::size_t getDimension() const { return DIM; }
 
- 	const std::size_t& operator[](std::ptrdiff_t index) const{
-		if(std::size_t(index)>_dim) throw std::out_of_range("Index out of range");
- 		return _lengths[index];
+ 	bool operator==(const ContainerLengths& other){
+ 		if(DIM != other.getDimension()) return false;
+ 		for(std::size_t i=0;i<DIM;++i) if(_lengths[i]!=other._lengths[i]) return false;
+ 		return true;
+ 	}
+
+ 	/* Le paramètre correspond à une dimension */
+ 	const std::size_t& operator[](std::ptrdiff_t dim) const{
+		if(dim>DIM) throw std::out_of_range("Index out of range");
+ 		return _lengths[--dim];
 	}
-	std::size_t& operator[](std::ptrdiff_t index){
-		if(std::size_t(index)>_dim) throw std::out_of_range("Index out of range");
- 		return _lengths[index];
+	std::size_t& operator[](std::ptrdiff_t dim){	
+		if(dim>DIM) throw std::out_of_range("Index out of range");
+ 		return _lengths[--dim];
 	}
 
-	~ContainerLengths(){ delete[] _lengths; }
+	/* Renvoie le nombre d'éléments compris dans la dimension donnée */
+	std::size_t getSize(std::size_t dim=DIM) const { 		
+		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
+		std::size_t size = 1; 
+		for(std::size_t dimI=1;dimI<=DIM;++dimI) size*=_lengths[dimI]; 
+		return size;
+	}
+
+	virtual ~ContainerLengths(){}
 };
 
 #endif
