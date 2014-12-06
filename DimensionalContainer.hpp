@@ -5,49 +5,26 @@
 #include <stdexcept>
 #include "ContainerLengths.hpp"
 
-/* Classe abstraite représentant un conteneur d'élements et ayant plusieurs dimensions */
+/* Classe abstraite définissant des opérations basiques sur la longueur des 
+dimensions d'un conteneur */
 template<std::size_t DIM> 
 class DimensionalContainer{
-	ContainerLengths _lengths;
+	const std::size_t* _lengths;
 
 protected:
 	/* Classe abstraite : constructeur en protected */
-	DimensionalContainer(const ContainerLengths<DIM>& lengths) : _lengths(lengths) {}
-
-	/* Modifie les longueurs des dimensions de la dimension donnée */
-	void setDimensionLengths(const ContainerLengths& lengths, std::size_t dim=DIM){
-		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
-		for(std::size_t i=DIM-dim;i<DIM;++i) _lengths[i] = lengths[i];
-	}
+	DimensionalContainer(const std::size_t* l) : _lengths(l) {}
 
 public:
-	/* Renvoie les longueurs des dimensions de la dimension donnée */
-	ContainerLengths getDimensionLengths(std::size_t dim=DIM) const{
-		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
-		return _lengths.getLengths(dim);
-	}
-	/* Calcule la taille d'un potentiel conteneur en utilisant 2 ContainerLengths, 
-	celui de this pour les dimensions > dim, et l'autre entièrement */
-	std::size_t computeSize(ContainerLengths& lengths, std::size_t dim) const{
-		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
-		std::size_t size = 1;
-		for(std::size_t i=0;i<DIM-dim;++i) size *= this->_lengths[i];
-		for(std::size_t i=0;i<dim;++i) size *= lengths[i];
-		return size;
-	}
-	std::size_t getDimension() const { return _lengths.getDimension(); }
-	/* Renvoie la longueur de la dimension donnée */
-	std::size_t getLength(std::size_t dim=DIM) const {		
-		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
-		return _lengths[dim]; 
-	}
+	
 	/* Renvoie le nombre d'éléments compris dans la dimension donnée */
-	std::size_t getSize(std::size_t dim=DIM) const { 		
-		if(dim==0 || dim>DIM) throw std::out_of_range("Index out of range");
+	std::size_t size(std::size_t dim=DIM) const { 		
+		if(dim==0 || dim>DIM) throw std::out_of_range("Dimension out of range");
 		std::size_t size = 1; 
-		for(std::size_t dimI=1;dimI<=DIM;++dimI) size*=_lengths[dimI]; 
+		for(std::size_t i=DIM-dim;i<DIM;++i) size*=_lengths[i]; 
 		return size;
 	}
+
 	/* Renvoie vrai si, respectivement, les dimensions de l'objet donné 
 	en paramètre est égale aux dimensions de this */
 	bool hasSameLengths(const DimensionalContainer<DIM>& other) {
@@ -56,6 +33,11 @@ public:
 			if(_lengths[i]!=other._lengths[i]) return false;
 		} 
 		return true;
+	}
+	std::size_t dimension() const { return DIM; }
+	std::size_t length(std::size_t dim=DIM){ 
+		if(dim==0 || dim>DIM) throw std::out_of_range("Dimension out of range")
+		return _lengths[DIM-dim]
 	}
 
 	virtual ~DimensionalContainer(){}

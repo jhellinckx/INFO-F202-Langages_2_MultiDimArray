@@ -1,5 +1,8 @@
 all: Vec
 
+clean: 
+		$(RM) Vec
+
 make++: Vec++
 
 Vec++: Vec.cpp
