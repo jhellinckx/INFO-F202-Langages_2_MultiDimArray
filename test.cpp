@@ -3,21 +3,19 @@
 
 class A{
 public:
-	int* _a;
-public:
-	A(int* a) : _a(a){}
-	virtual ~A(){}
+	virtual char lower(){return 'a';}
+	char test(){return lower();}
 };
-template<std::size_t DIM>
+
 class B: public A{
 public:
-	int _b[DIM];
-	B(): A(_b) {
-		for(int i=0;i<DIM;++i) _b[i]=i;
-	} 
+	virtual char lower(){return 'b';}
 };
+
+
 int main(){
-	B<5> b=B<5>();
-	std::cout<<b._a[2]<<std::endl;
+	B b;
+	std::cout<<b.test()<<std::endl;
+	
 }
 

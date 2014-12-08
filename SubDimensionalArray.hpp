@@ -3,26 +3,25 @@
 
 #include <exception>
 #include <stdexcept>
-#include "ContainerLengths.hpp"
+#include "AbstractDimensionalArray.hpp"
 
 template<typename Elem, std::size_t DIM>
-class MultiDimensionalArray;
+class DimensionalArray;
 
 template<typename Elem, std::size_t DIM>
-class SubDimensionalArray{
-	const ContainerLengths& _lengths;
-	Elem* const _val;
+class SubDimensionalArray: public AbstractDimensionalArray<DIM>{
 protected:
-	SubDimensionalArray(const ContainerLengths& lengths, Elem* val): 
-		_lengths(lengths), _val(val) {}
+	Elem* const _val;
+	SubDimensionalArray(std::size_t* const lengths, Elem* const val): 
+		AbstractDimensionalArray<DIM>(lengths), _val(val) {}
 	SubDimensionalArray(const SubDimensionalArray<Elem, DIM>& other) : 
-		_lengths(other._lengths), _val(other._val){}
+		AbstractDimensionalArray<DIM>(other._lengths), _val(other._val){}
 
 public:
 	SubDimensionalArray<Elem, DIM>& operator=(const SubDimensionalArray<Elem, DIM>& other){
 		if(this != &other){
-			if(_lengths == other._lengths){
-				for(std::size_t i=0;i<_lengths.size(DIM);++i){
+			if(this->sameLengths(other)){
+				for(std::size_t i=0;i<this->size(DIM);++i){
 					_val[i] = other._val[i];
 				}
 				return *this;
@@ -32,36 +31,31 @@ public:
 		return *this;
 	}
 	SubDimensionalArray<Elem, DIM-1> operator[](std::ptrdiff_t i){
-		if(i>=_lengths[DIM]) throw std::out_of_range("Index for dimension out of range");
-		return SubDimensionalArray<Elem, DIM-1>(_lengths, _val+i*_lengths.size(DIM-1));
+		if(i>=this->length(DIM)) throw std::out_of_range("Index for dimension out of range");
+		return SubDimensionalArray<Elem, DIM-1>(this->_lengths+1, _val+i*this->size(DIM-1));
 	}
 	SubDimensionalArray<Elem, DIM-1> operator[](std::ptrdiff_t i) const{
-		if(i>=_lengths[DIM]) throw std::out_of_range("Index for dimension out of range");
-		return SubDimensionalArray<Elem, DIM-1>(_lengths, _val+i*_lengths.size(DIM-1));
+		if(i>=this->length(DIM)) throw std::out_of_range("Index for dimension out of range");
+		return SubDimensionalArray<Elem, DIM-1>(this->_lengths+1, _val+i*this->size(DIM-1));
 	}
-
-	std::size_t length() const { return _lengths[DIM]; }
-	std::size_t dimension() const { return DIM; }
 
 	virtual ~SubDimensionalArray(){}
 
-	friend class MultiDimensionalArray<Elem, DIM+1>;
+	friend class DimensionalArray<Elem, DIM+1>;
 	friend class SubDimensionalArray<Elem, DIM+1>;
 };
 
 //------------------------------------------------------------
 
 template<typename Elem>
-class SubDimensionalArray<Elem, 1>{
-	std::size_t _length;
+class SubDimensionalArray<Elem, 1>: public AbstractDimensionalArray<1>{
+protected:
 	Elem* const _val;
-
 public:
-	/* length[1] == longueur de la dimension 1 */
-	SubDimensionalArray(const ContainerLengths& length, Elem* val): 
-		_length(length[1]), _val(val) {}
+	SubDimensionalArray(const std::size_t* const lengths, Elem* const val): 
+		AbstractDimensionalArray<1>(lengths[0]), _val(val) {}
 	SubDimensionalArray(const SubDimensionalArray<Elem, 1>& other):
-		_length(other._length), _val(other._val) {}
+		AbstractDimensionalArray<1>(other._length), _val(other._val) {}
 
 	SubDimensionalArray<Elem, 1>& operator=(const SubDimensionalArray<Elem, 1>& other){
 		if(this != &other){
@@ -83,10 +77,7 @@ public:
 	}
 	virtual ~SubDimensionalArray(){}
 
-	std::size_t dimension() const { return 1; }
-	std::size_t length() const { return _length; }
-
-	friend class MultiDimensionalArray<Elem, 2>;
+	friend class DimensionalArray<Elem, 2>;
 	friend class SubDimensionalArray<Elem, 2>;
 };
 

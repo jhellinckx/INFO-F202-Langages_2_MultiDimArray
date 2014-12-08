@@ -3,13 +3,13 @@
 
 #include <exception>
 #include <stdexcept>
-#include "DimensionalContainer.hpp"
+#include "AbstractDimensionalArray.hpp"
 #include "SubDimensionalArray.hpp" 
 
 /* Classe représentant un tableau de dimension potentiellement infine. 
 Gère en mémoire _lengths[] et _val[] */
 template<typename Elem, std::size_t DIM>
-class MultiDimensionalArray: public DimensionalContainer<DIM>{
+class DimensionalArray: public AbstractDimensionalArray<DIM>{
 protected:
 	Elem* _val;
 	
@@ -26,13 +26,13 @@ protected:
 		return lengths;
 	}
 public:
-	MultiDimensionalArray(const std::initializer_list<std::size_t>& lengthsList, const Elem& elem = Elem()): 
-		DimensionalContainer<DIM>(storeLengths(lengthsList)), _val(new Elem[this->size()]){
+	DimensionalArray(const std::initializer_list<std::size_t>& lengthsList, const Elem& elem = Elem()): 
+		AbstractDimensionalArray<DIM>(storeLengths(lengthsList)), _val(new Elem[this->size()]){
 			for(std::size_t i=0;i<this->size();++i) _val[i] = elem;
 	}
 
-	MultiDimensionalArray(const std::array<std::size_t, DIM>& lengthsList, const Elem& elem = Elem()):
-		DimensionalContainer<DIM>(storeLengths(lengthsList)), _val(new Elem[this->size()]){
+	DimensionalArray(const std::array<std::size_t, DIM>& lengthsList, const Elem& elem = Elem()):
+		AbstractDimensionalArray<DIM>(storeLengths(lengthsList)), _val(new Elem[this->size()]){
 			for(std::size_t i=0;i<this->size();++i) _val[i] = elem;
 	}
 	
@@ -49,13 +49,13 @@ public:
 		return SubDimensionalArray<Elem, DIM-1>(this->_lengths+1, _val+i*this->size(DIM-1));
 	}
 
-	MultiDimensionalArray(const MultiDimensionalArray<Elem, DIM>& other): 
-		DimensionalContainer<DIM>(new std::size_t[DIM]), _val(new Elem[other.size()]){
+	DimensionalArray(const DimensionalArray<Elem, DIM>& other): 
+		AbstractDimensionalArray<DIM>(new std::size_t[DIM]), _val(new Elem[other.size()]){
 			for(std::size_t i=0;i<DIM;++i) this->_lengths[i] = other._lengths[i];
 			for(std::size_t i=0;i<this->size();++i) this->_val[i] = other._val[i];
 	} 
-	MultiDimensionalArray(MultiDimensionalArray<Elem,DIM>&&);
-	MultiDimensionalArray<Elem, DIM>& operator=(const MultiDimensionalArray<Elem, DIM>& other){
+	DimensionalArray(DimensionalArray<Elem,DIM>&&);
+	DimensionalArray<Elem, DIM>& operator=(const DimensionalArray<Elem, DIM>& other){
 		if(this!=&other){
 			if(this->sameLengths(other)){
 				for(std::size_t i=0;i<this->size();++i) _val[i] = other._val[i];
@@ -78,24 +78,24 @@ public:
 		delete[] _val; _val = tmp;
 	}
 
-	MultiDimensionalArray<Elem, DIM>& operator=(MultiDimensionalArray<Elem, DIM>&&);
-	virtual ~MultiDimensionalArray(){delete[] this->_val; delete[] this->_lengths;}
+	DimensionalArray<Elem, DIM>& operator=(DimensionalArray<Elem, DIM>&&);
+	virtual ~DimensionalArray(){delete[] this->_val; delete[] this->_lengths;}
 };
 
 //------------------------------------------------------------
 
 template<typename Elem>
-class MultiDimensionalArray<Elem, 1>: public DimensionalContainer<1>{
+class DimensionalArray<Elem, 1>: public AbstractDimensionalArray<1>{
 	Elem* _val;
 
 public:
-	MultiDimensionalArray(std::size_t length, const Elem& elem = Elem()): 
-		DimensionalContainer<1>(length), _val(new Elem[_length]) {
+	DimensionalArray(std::size_t length, const Elem& elem = Elem()): 
+		AbstractDimensionalArray<1>(length), _val(new Elem[_length]) {
 			for(std::size_t i=0;i<_length;++i) _val[i] = elem;
 		}
 	
-	MultiDimensionalArray(const MultiDimensionalArray<Elem, 1>& other):
-		DimensionalContainer<1>(other._length), _val(new Elem[_length]){
+	DimensionalArray(const DimensionalArray<Elem, 1>& other):
+		AbstractDimensionalArray<1>(other._length), _val(new Elem[_length]){
 			for(std::size_t i=0;i<_length;++i) _val[i] = other._val[i];
 	}
 	const Elem& operator[](std::ptrdiff_t i) const{
@@ -107,9 +107,9 @@ public:
 		if(i>_length) throw std::out_of_range("Index out of range");
 		return _val[i];
 	}
-	virtual ~MultiDimensionalArray(){delete[] this->_val;}
+	virtual ~DimensionalArray(){delete[] this->_val;}
 
-	MultiDimensionalArray<Elem, 1>& operator=(const MultiDimensionalArray<Elem, 1>& other){
+	DimensionalArray<Elem, 1>& operator=(const DimensionalArray<Elem, 1>& other){
 		if(this!=&other){
 			if(_length == other._length){
 				for(std::size_t i=0;i<_length;++i) _val[i] = other._val[i];  
