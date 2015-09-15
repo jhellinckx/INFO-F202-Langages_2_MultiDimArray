@@ -1,1 +1,0 @@
-const_cast<MultiDimensionalArray<Elem, DIM>*>(this), 
